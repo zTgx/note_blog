@@ -62,7 +62,35 @@ pub fn render(_req: Request<Body>) -> Response<Body> {
     Response::new(Body::from(PHRASE))
 }
 
+fn test_render() {
+    const LIPSUM: &'static str =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut \
+        labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco \
+        laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in \
+        voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat \
+        cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum";
+
+    let tera = Tera::new("templates/**/*");
+    let mut ctx = Context::new();
+    ctx.add("title", &"hello world!");
+    ctx.add("content", &LIPSUM);
+    ctx.add("todos",
+            &vec!["buy milk", "walk the dog", "write about tera"]);
+    match TEMPLATES.render("index.html", &ctx) {
+        Ok(s) => {
+            println!("OK: {:?}", s);        
+        },
+
+        Err(e) => {
+            println!("err: {}", e);
+        },
+    }
+}
+
 fn main() {
+
+    test_render();
+
     let version = env!("CARGO_PKG_VERSION");
     println!("version : {}", version);
 
@@ -74,7 +102,7 @@ fn main() {
     let new_svc = || {
         // service_fn_ok converts our function into a `Service`
         service_fn_ok(render)
-        //service_fn_ok(hello_world)
+            //service_fn_ok(hello_world)
     };
 
     let server = Server::bind(&addr)
