@@ -30,6 +30,12 @@ fn hello_world(_req: Request<Body>) -> Response<Body> {
     Response::new(Body::from(PHRASE))
 }
 
+struct Person {
+id : i32,
+   name: String,
+   data: Option<String>,
+}
+
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
         let mut tera = compile_templates!("templates/**/*");
@@ -37,6 +43,7 @@ lazy_static! {
         tera.register_filter("do_nothing", do_nothing_filter);
         tera
     };
+
 }
 
 pub fn do_nothing_filter(value: Value, _: HashMap<String, Value>) -> Result<Value> {
@@ -63,7 +70,8 @@ pub fn render(req: Request<Body>) -> Box<dyn Future<Item=Response<Body>, Error=h
                     let mut message= "message".to_string();
                     if let Some(x) = params.get("message") { message = x.to_string(); };
 
-                let body = format!("Hello {}, your number is {}", name, message);
+                let body = format!("Hello {}, you saying is {}", name, message);
+                insert(name, Some(message));
                 Response::new(body.into())
 
                 }));
@@ -150,45 +158,44 @@ pub fn render(req: Request<Body>) -> Box<dyn Future<Item=Response<Body>, Error=h
         }
     }
 
-    fn init_sql() {
+    
 
-        struct Person {
-            id : i32,
-            name: String,
-            data: Option<String>,
-        }
-        let conn = Connection::connect("postgres://postgres:123456@127.0.0.1:5432", TlsMode::None).unwrap();
-        conn.execute("CREATE TABLE person (
+    fn exec() {
+        let con: Connection =  Connection::connect("postgres://postgres:123456@127.0.0.1:5432", TlsMode::None).unwrap();
+        con.execute("CREATE TABLE if not exists person (
                                 id SERIAL PRIMARY KEY,
                                 name VARCHAR NOT NULL,
                                 data VARCHAR)", &[]).unwrap();
+    }
 
-    //}
-
-    //fn insert() {
+    fn insert(name: String, message: Option<String>) {
         let me = Person {
             id: 0,
-            name: "Steven".to_string(),
-            data: None,
+            name: name,
+            data: message,
         };
 
-        conn.execute("INSERT INTO person (name, data) VALUES ($1, $2)",  &[&me.name, &me.data]).unwrap();
-    //}
+        let con: Connection =  Connection::connect("postgres://postgres:123456@127.0.0.1:5432", TlsMode::None).unwrap();
+        con.execute("INSERT INTO person (name, data) VALUES ($1, $2)",  &[&me.name, &me.data.unwrap_or_else(|| "default".to_string() )]).unwrap();
+        
+        query();
+    }
 
-    //fn query() {
-        for row in &conn.query("SELECT id, name, data FROM person", &[]).unwrap() {
+    fn query() {
+        let con: Connection =  Connection::connect("postgres://postgres:123456@127.0.0.1:5432", TlsMode::None).unwrap();
+        for row in &con.query("SELECT id, name, data FROM person", &[]).unwrap() {
             let person = Person {
                         id: row.get(0),
                         name: row.get(1),
                         data: row.get(2),
             };
 
-            println!("Found person {}: {}", person.id, person.name);
+            println!("Found person {}: {} says : {}", person.id, person.name, person.data.unwrap_or_else(|| "".to_string() ));
         }
     }
     fn main() {
 
-        init_sql();
+        exec();
 
         let version = env!("CARGO_PKG_VERSION");
         println!("version : {}", version);

@@ -21,6 +21,12 @@ function submitAction()
 	//document.getElementById("message").value = ""
 }
 
+function showPost() {
+
+	//get method : get current note from server
+
+}
+
 function httpRequest(mes) {
 	var xmlhttp = null;
 	if(window.XMLHttpRequest) {
@@ -37,8 +43,15 @@ function httpRequest(mes) {
 xmlhttp.onreadystatechange = function() {
     if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
       /*成功回调函数*/
-      alert(xmlhttp.responseText);
-	//alert("success.")
+      //alert(xmlhttp.responseText);
+      //alert("success.")
+	
+      //update note blog
+	
+	var old = document.getElementById("content").value;
+	document.getElementById("content").value = xmlhttp.responseText + "\n" + old;
+	//alert(old);
+
     }else{
     	/*失败回调函数*/
 //    	errFun;
@@ -81,5 +94,15 @@ xmlhttp.onreadystatechange = function() {
 value="Submit" />
 </center>
 </form> 
+
+<form>
+<center>
+<textarea name="content" id="content" rows="10" cols="30" disabled="disabled" wrap="soft">
+</textarea>
+</cener>
+</form>
+
+
+
 
 <body bgcolor="#F5F5DC">
