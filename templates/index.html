@@ -10,11 +10,21 @@ function submitAction()
 	
 	//alert(name + message)
 	
+	//send to server
 	httpRequest({"name" : name , "message" : message})
 
+	//show this post at noteblog
+	showPost()
+
 	//clear
-	document.getElementById("name").value = ""
-	document.getElementById("message").value = ""
+	//document.getElementById("name").value = ""
+	//document.getElementById("message").value = ""
+}
+
+function showPost() {
+
+	//get method : get current note from server
+
 }
 
 function httpRequest(mes) {

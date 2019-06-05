@@ -21,6 +21,10 @@ use futures::{future, Stream};
 
 use hyper::service::service_fn;
 
+extern crate postgres;
+use postgres::{Connection, TlsMode};
+
+
 const PHRASE: &str = "Hello, World!";
 fn hello_world(_req: Request<Body>) -> Response<Body> {
     Response::new(Body::from(PHRASE))
@@ -146,9 +150,45 @@ pub fn render(req: Request<Body>) -> Box<dyn Future<Item=Response<Body>, Error=h
         }
     }
 
+    fn init_sql() {
+
+        struct Person {
+            id : i32,
+            name: String,
+            data: Option<String>,
+        }
+        let conn = Connection::connect("postgres://postgres:123456@127.0.0.1:5432", TlsMode::None).unwrap();
+        conn.execute("CREATE TABLE person (
+                                id SERIAL PRIMARY KEY,
+                                name VARCHAR NOT NULL,
+                                data VARCHAR)", &[]).unwrap();
+
+    //}
+
+    //fn insert() {
+        let me = Person {
+            id: 0,
+            name: "Steven".to_string(),
+            data: None,
+        };
+
+        conn.execute("INSERT INTO person (name, data) VALUES ($1, $2)",  &[&me.name, &me.data]).unwrap();
+    //}
+
+    //fn query() {
+        for row in &conn.query("SELECT id, name, data FROM person", &[]).unwrap() {
+            let person = Person {
+                        id: row.get(0),
+                        name: row.get(1),
+                        data: row.get(2),
+            };
+
+            println!("Found person {}: {}", person.id, person.name);
+        }
+    }
     fn main() {
 
-        //test_render();
+        init_sql();
 
         let version = env!("CARGO_PKG_VERSION");
         println!("version : {}", version);
